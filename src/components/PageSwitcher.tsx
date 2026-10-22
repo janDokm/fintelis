@@ -7,7 +7,7 @@ export const PAGES = [
   { group: 'Front door', items: [
     { to: '/', label: 'Welcome' },
     { to: '/login', label: 'Login' },
-    { to: '/signup', label: 'Sign up (legacy Auth page)' },
+    { to: '/signup', label: 'Sign up' },
   ] },
   { group: 'Workspace', items: [
     { to: '/home', label: 'Dashboard' },

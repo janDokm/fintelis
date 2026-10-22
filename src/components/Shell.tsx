@@ -2,22 +2,27 @@ import React, { useEffect, useState } from 'react';
 import { Activity, Bell, ChevronDown, FileText, House, LogOut, Plus, Search, Settings, Table2, Workflow } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Link, go } from '../lib/router';
-import { Avatar, Button, Kbd, Logo } from './ui';
+import { Button, Kbd, Logo } from './ui';
+import { useAuth } from '../lib/auth';
 import { Magnetic } from './Magnetic';
 import { TextScramble } from './TextScramble';
 
 export const NAV = [
-  { to: '/', label: 'Home', icon: House },
+  { to: '/home', label: 'Home', icon: House },
   { to: '/documents', label: 'Documents', icon: FileText },
   { to: '/sheet', label: 'Sheets', icon: Table2 },
   { to: '/workflows', label: 'Workflows', icon: Workflow },
   { to: '/reports', label: 'Reports', icon: Activity },
 ];
-const active = (route: string, to: string) => (to === '/' ? route === '/' : route.startsWith(to));
+const active = (route: string, to: string) => route.startsWith(to);
+const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('') || '?';
 
 export function Shell({ route, children }: { route: string; children: React.ReactNode }) {
   const [palette, setPalette] = useState(false);
   const [menu, setMenu] = useState(false);
+  const { user, profile, signOut } = useAuth();
+  const name = profile?.displayName || user?.displayName || user?.email || 'Account';
+  const logout = async () => { await signOut(); go('/login'); };
 
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
@@ -33,7 +38,7 @@ export function Shell({ route, children }: { route: string; children: React.Reac
       <header className="sticky top-0 z-40 border-b border-white/5 bg-brand-dark/80 backdrop-blur-lg">
         <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-6 px-4 sm:px-6 lg:px-8">
           <Magnetic>
-            <Link to="/" className="flex items-center gap-3">
+            <Link to="/home" className="flex items-center gap-3">
               <Logo size={36} />
               <span className="font-display text-xl font-medium tracking-wide">Fintelis</span>
             </Link>
@@ -58,14 +63,14 @@ export function Shell({ route, children }: { route: string; children: React.Reac
               <Bell size={18} /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-brand-emerald shadow-[0_0_8px_rgba(0,223,130,0.8)]" />
             </button>
             <div className="relative">
-              <button onClick={() => setMenu((m) => !m)} aria-label="Account"><Avatar id="at" size={32} /></button>
+              <button onClick={() => setMenu((m) => !m)} aria-label="Account" title={name} className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-emerald/15 text-[12px] font-medium text-brand-emerald ring-2 ring-brand-dark">{initials(name)}</button>
               {menu && (
                 <>
                   <div className="fixed inset-0" onClick={() => setMenu(false)} />
                   <div className="absolute right-0 top-11 w-56 rounded-2xl border border-white/10 bg-brand-dark/95 p-1.5 shadow-2xl backdrop-blur-xl">
-                    <div className="px-3 py-2"><p className="text-sm font-medium">Alex Tan</p><p className="text-xs text-brand-light/40">alex@fintelis.my</p></div>
+                    <div className="px-3 py-2"><p className="truncate text-sm font-medium">{name}</p><p className="truncate text-xs text-brand-light/40">{user?.email}</p></div>
                     <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-brand-light/70 hover:bg-white/5 hover:text-brand-emerald"><Settings size={15} /> Settings</button>
-                    <button onClick={() => go('/login')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-brand-light/70 hover:bg-white/5 hover:text-brand-emerald"><LogOut size={15} /> Sign out</button>
+                    <button onClick={logout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-brand-light/70 hover:bg-white/5 hover:text-brand-emerald"><LogOut size={15} /> Sign out</button>
                   </div>
                 </>
               )}
@@ -80,19 +85,19 @@ export function Shell({ route, children }: { route: string; children: React.Reac
       </header>
 
       <main className="flex-1">{children}</main>
-      <AnimatePresence>{palette && <Palette onClose={() => setPalette(false)} />}</AnimatePresence>
+      <AnimatePresence>{palette && <Palette onClose={() => setPalette(false)} onSignOut={logout} />}</AnimatePresence>
     </div>
   );
 }
 
-function Palette({ onClose }: { onClose: () => void }) {
+function Palette({ onClose, onSignOut }: { onClose: () => void; onSignOut: () => void }) {
   const [q, setQ] = useState('');
-  const items = [
+  const items: { label: string; to?: string; icon: typeof Plus }[] = [
     ...NAV.map((n) => ({ label: `Go to ${n.label}`, to: n.to, icon: n.icon })),
     { label: 'Create a new sheet', to: '/sheet', icon: Plus },
-    { label: 'Sign out', to: '/login', icon: LogOut },
+    { label: 'Sign out', icon: LogOut },
   ].filter((i) => i.label.toLowerCase().includes(q.toLowerCase()));
-  const pick = (to: string) => { go(to); onClose(); };
+  const pick = (to?: string) => { if (to) go(to); else onSignOut(); onClose(); };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }} className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-[15vh]" onClick={onClose}>

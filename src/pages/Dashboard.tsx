@@ -7,6 +7,7 @@ import { Ticker } from '../components/Ticker';
 import { Magnetic } from '../components/Magnetic';
 import { TextScramble } from '../components/TextScramble';
 import { Link, go } from '../lib/router';
+import { useAuth } from '../lib/auth';
 
 const QUICK = [
   { icon: Table2, label: 'New sheet', hint: 'Track documents in a grid', to: '/sheet', glow: 'emerald', color: 'text-brand-emerald' },
@@ -18,6 +19,8 @@ const QUICK = [
 export function Dashboard() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const { profile, user } = useAuth();
+  const firstName = (profile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'there').trim().split(/\s+/)[0];
   const count = (s: string) => ROWS.filter((r) => r.status === s).length;
   const attention = ROWS.filter((r) => r.status === 'review' || r.status === 'blocked').slice(0, 6);
 
@@ -38,7 +41,7 @@ export function Dashboard() {
           <LiveBadge>Workspace live</LiveBadge>
           <h1 className="mb-6 mt-8 text-5xl font-medium leading-[1] md:text-7xl">
             <span className="block bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">{greeting},</span>
-            <span className="block bg-gradient-to-r from-brand-emerald to-brand-gold bg-clip-text pb-2 text-transparent">Alex.</span>
+            <span className="block bg-gradient-to-r from-brand-emerald to-brand-gold bg-clip-text pb-2 text-transparent">{firstName}.</span>
           </h1>
           <p className="max-w-2xl border-l border-brand-emerald/30 pl-6 text-lg font-light leading-relaxed tracking-wide text-brand-light/60">
             {count('review')} documents are waiting for review and {count('blocked')} are blocked. Everything else is moving.

@@ -24,3 +24,17 @@ One deliberate deviation: the custom cursor is not hidden over inputs/selects, s
 Wired: cell select / range drag / shift-arrows, type-to-edit, Enter / Tab / Esc, typed editors per column type,
 bulk status/owner from the contextual bar, details panel edits, column show/hide, add row, range Sum/Average/Count, panel toggles.
 Decorative (visual only): menu bar, most toolbar buttons, views, saved filters, sheet tabs, add column, share, history.
+
+## Light / dark mode
+`src/lib/theme.ts` toggles a `light` class on `<html>` and remembers the choice (localStorage `fintelis-theme`, default dark).
+The light palette is the `:root.light` block in `src/index.css`. Every `white/xx` utility reads `--color-white`, which flips to ink in light mode,
+so new pages switch automatically. Avoid hard-coded hex/rgba colours in components; use the brand tokens.
+Switches: sidebar header, front-door pages, Profile > Appearance, and Ctrl/Cmd+K.
+
+## Profile editing
+`updateMyProfile()` in `src/lib/auth.tsx` writes display name, NRIC/passport, internship dates and focus residence to Firestore `users/{email}`
+(and the display name to Firebase Auth). Email is the primary key and is read-only. Firestore rules must let a person write their own document:
+
+    match /users/{email} {
+      allow read, write: if request.auth != null && request.auth.token.email.lower() == email;
+    }
